@@ -1,0 +1,90 @@
+[%- use_jquery      =1 -%]
+[%- use_mootools    =1 -%]
+[%- use_jdmenu      =1 -%]
+[%- use_grid        =1 -%]
+[%- use_tree        =1 -%]
+[%- use_mif_tree    =1 -%]
+[%- use_popup       =1 -%]
+
+[%- javascript_block = BLOCK %]
+
+window.addEvent('domready',function(){
+
+    var tree = new Mif.Tree({
+	    container:      $('tree_container2'),
+	    initialize:     function(){
+    		// this.initSortable();
+//		    new Mif.Tree.KeyNav(this);
+	    },
+	    types: {
+    		folder:     {
+			    openIcon:       'mif-tree-open-icon',
+			    closeIcon:      'mif-tree-close-icon',
+			    loadable:       true
+		    },
+		    file:{
+    			openIcon:       'mif-tree-file-open-icon',
+			    closeIcon:      'mif-tree-file-close-icon'
+		    },
+		    loader:{
+    			openIcon:       'mif-tree-loader-open-icon',
+			    closeIcon:      'mif-tree-loader-close-icon',
+			    DDnotAllowed:   ['inside','after']
+		    }
+	    },
+	    dfltType:       'folder'
+    })
+	.addEvent('select',function(node){
+        get_stored_filename(node.data.node_id);
+	})
+    ;
+
+    tree.load({
+    	url:    '/ajax/tree_root'
+    });
+
+    tree.loadOptions=function(node){
+    	return {
+		    url:    '/ajax/tree_children',
+		    data:   {'node_id':     node.data.node_id}
+	    };
+    };
+
+});
+
+function get_stored_filename(node_id) {
+    jQuery.getJSON("[% c.uri_for('/ajax/stored_filename') %]", {
+        s_node_id:      node_id
+    }, function(json) {
+        if (json.error) {
+            jQuery('#error').html('<em>'+json.message+'</em>');
+        }
+        else {
+            pop_up_window(json.filename);
+        }
+    });
+    return false;
+}
+
+function pop_up_window(url) {
+    jQuery('#first_file_href').popupWindow({
+        windowName: 'fred',
+        windowURL:  url,
+        height:     500,
+        width:      800,
+        top:        50,
+        left:       50
+    });
+    jQuery('#first_file_href').click();
+}
+
+
+[%- END %]
+
+[%- PROCESS header.html -%]
+
+	<h1>Simple Tree lazy</h1>
+	<div id="tree_container2"></div>
+	<a id="first_file_href"></a>
+
+[%- PROCESS footer.html -%]
